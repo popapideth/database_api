@@ -10,17 +10,18 @@ const saltRounds = 10// saltRounds ใช้gen hash pass
 // JSON web tokenในการยืนยันตัวเข้าสู่ระบบ
 var jwt = require('jsonwebtoken');
 const secret = 'fullstack-login-2024'// ตัวแปรที่ใช้gen token 
-
+require('dotenv').config()
 
 app.use(cors())
+
 // get the client save data in database
 const mysql = require('mysql2')
-
 // connection database
 const connection = mysql.createConnection({
-    host : 'localhost',
-    user : 'root',
-    database : 'database_login'
+    host : process.env.DB_HOST,
+    user : process.env.DB_USER,
+    password:process.env.DB_PASSWORD,
+    database : process.env.DB_DATABASE
 })
 
 
@@ -81,6 +82,26 @@ app.post('/authen', jsonParser, function (req, res, next) {
         res.json({status: 'ERROR', message: err.message});
     }
 });
+
+// -----------data-----------------
+app.get('/data', function(req, res, next){
+    connection.query(`
+        SELECT 
+            companies.*, 
+            contacts.*, 
+            profile_changes.*, 
+            team_members.*
+        FROM 
+            companies
+        LEFT JOIN contacts ON companies.company_id = contacts.company_id
+        LEFT JOIN profile_changes ON companies.company_id = profile_changes.company_id
+        LEFT JOIN team_members ON companies.company_id = team_members.company_id
+    `, function(error, results, fields){
+        if(error) throw error;
+        res.json(results)
+    })
+})
+
 
 app.listen(4444, function () {
   console.log('CORS-enabled web server listening on port 4444')
